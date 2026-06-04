@@ -1,7 +1,7 @@
 # Data Science Project: Recipes and Ratings
 
 ## Introduction
-This project centers around two datasets that are originally from [food.com](https://food.com/), an online community for cooking lovers where users can share, review, and rate recipes. The two datasets are **recipes** (731927 rows, 5 columns), containing information about recipes (each row is an individual recipe), and **interactions** (83782 rows, 12 columns), containing customers' reviews and ratings on the recipes (each row is a review). 
+This project centers around two datasets that are originally from [food.com](https://food.com/), an online community for cooking lovers where users can share, review, and rate recipes. The two datasets are **recipes** (83782 rows, 12 columns), containing information about recipes (each row is an individual recipe), and **interactions** (731927 rows, 5 columns), containing customers' reviews and ratings on the recipes (each row is a review). 
 
 There are a lot of variations among the recipes, with some recipes taking only one or two minutes to make while others taking months. Users of [food.com](https://food.com/) also have different perceptions of the recipes, with some recipes receiving a five out of five rating while others being rated only one out of five. Looking through the data, one might wonder: what makes a recipe more popular than others? One guess would be the complexity of a recipe, as in how manys steps it takes to make the recipe or how many ingredients one need to use to make it. The time it takes to make a recipe would also reflect its complexity. People might like a complex recipe better because the food will turn out to be more interesting and delicious, or they might prefer a simpler recipe because it takes less time and effort. Therefore, we explored the question **How does the complexity of a recipe relate to users' rating of it?** by conducting some data analysis. Later on, we also looked into how we can **predict the rating of a recipe from its characteristics** so that when we see a recipe, we can infer whether people will like it or not, and thereby decide if it's worthwhile trying.
 
@@ -165,7 +165,7 @@ Response variable: `avg_rating` is already a direct measurement of the ratings o
 
 Evaluation metric: RMSE. This metric especially penalizes wrong predictions with a squared error, so a high prediction error gets penalized much more than a low prediction error. This is actually what we need, because the rating scale (1-5) is very narrow, and a high error in prediction is very misleading of how the recipe could be perceived. We also prefer RMSE over MSE or R<sup>2</sup> because RMSE is interpretable in the original units of the response variable.
 
-The features we can use are any feature that is an attribute of a recipe, such `n_steps`, `n_ingredients`, `ratings`, the columns we have broken up from `nutrients`, the date `submitted`, `tags` and `description`.
+The features we can use are any feature that is an attribute of a recipe, such `n_steps`, `n_ingredients`, the columns we have broken up from `nutrients` (such as `calories`), and `submitted`, `tags` and `description`.
 
 
 ## Baseline Model
