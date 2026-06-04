@@ -143,7 +143,7 @@ At a significant level of 0.05, we **reject** the null hypothesis. The permutati
 
 **If we use the number of steps as a proxy for the complexity of a recipe, this answers the big question we posed at the beginning: the more complex a recipe is, the more polarizing is users' perception of it.**
 
-Below is a graph for the distribution of the simulated test statistics, with the vertica red line showing the observed test statistic from our dataset.
+Below is a graph for the distribution of the simulated test statistics, with the vertical red line showing the observed test statistic from our dataset.
 
 <iframe
   src="assets/test_fig1.html"
