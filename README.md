@@ -91,7 +91,7 @@ From the histogram we see that `log_minutes` is still right-skewed but more symm
 
 ### Bivariate Analysis
 
-For bivariate analysis, we analyzed the relation between features we are interested in and the average rating of a recipe, using **boxplots**. An example boxplot between `avg_rating` and `n_steps` is as follows, showing the distribution of `avg_rating` across four quartiles of `n_steps`.
+For bivariate analysis, we analyzed the relation between features we are interested in and the average rating of a recipe, using **boxplots**. An example boxplot between `avg_rating` and `n_steps` is as follows, showing the distribution of `avg_rating` across four groups of `n_steps` divided by quartiles.
 
 <iframe
   src="assets/box1_hist.html"
@@ -100,11 +100,11 @@ For bivariate analysis, we analyzed the relation between features we are interes
   frameborder="0"
 ></iframe>
 
-Just from the boxplot, the distribution of `avg_rating` across four quartiles of `n_steps` look very similar. We did the same for `n_ingredients` and `minutes`, and found similar results.
+Just from the boxplot, the distribution of `avg_rating` across four quartile group of `n_steps` look very similar. We did the same for `n_ingredients` and `minutes`, and found similar results.
 
 ### Aggregate Analysis
 
-To look more into bivariate patterns that are hard to see in the plots, we made some grouped tables to analyze aggregate statistics.
+To look more into bivariate patterns that are hard to see in the plots, we made some grouped tables to analyze aggregate statistics. Here is an example where we grouped **recipes** by the quartile groups of `n_steps` defined earlier for the boxplot, and looked at the statistics (mean, median, count, standard deviation) of `avg_rating` within each group. 
 
 
 |   mean |   median |   count |   std |
@@ -113,3 +113,119 @@ To look more into bivariate patterns that are hard to see in the plots, we made 
 |  4.621 |        5 |   19740 | 0.632 |
 |  4.616 |        5 |   18477 | 0.645 |
 |  4.631 |        5 |   17885 | 0.662 |
+
+We see that across the quartile groups, the center statistics (mean and median) are pretty consistent and we see no obvious pattern. However, we see that from the first group to the fourth group, the standard deviation of `avg_rating` within the group increases. This hints that there might be an association between the value of `n_steps` and the standard deviation of `avg_ratings`. Is it true that recipes with more steps receive more polarized ratings? We will look into this through a hypothesis test.
+
+
+## Assessment of Missingness
+
+Before we head into hypothesis testing, let's assess the missingness of **recipes**. In **recipes**, three columns: `name` and `description` and `avg_rating` have missing data. `avg_rating` has the highest number of missing entries. First, we wanted to examine if any of the columns with missing values could be NMAR (not missing at random, or missingness in a column depends on the values in that column). We could make educated guesses of how the missingness might depend on other columns, thereby ruling out NMAR. For `avg_rating`, it's missingness could depend on a lot of columns. For instance, some recipes are not rated because nobody bothered to try them, and this might be because the recipes is too complicated (missingess depends on `n_steps`), because it takes too long (missingess depends on `minutes`), or because the food isn't appealing (missingess depends on `ingredients`). For `description`, there isn't a good reason why it would be missing because of what the description would have been. Probably some recipe providers just didn't bother writing the description. This also makes NMAR not very plausible for `description`. Finally, only one entry of `name` is missing. This is just an arbitrary instance of missing data, so it is probably not NMAR either (likely MCAR, but we cannot say for sure without statistical testing). Therefore, we were convinced that none of the three columns are likely to be NMAR.
+
+Moving away from the possibility of NMAR, we wanted to test if the columns are MAR or MCAR, or in other words, does the missingness of a column depend on other columns. We chose to analyze `avg_rating` because it has the most number of missing entries, and its missingess would have a significant impact on our analyses.
+
+In order to determine if the missingness of `avg_rating` is MAR or MCAR, we used permutation test to see if the distribution of another column differs depending on whether `avg_rating` is missing. One of the columns we tested was `n_steps`. We observed that the mean `n_steps` for recipes where `avg_rating` is not missing is 10.058961, and the mean `n_steps` for recipes where `avg_rating` is missing turns out to be 11.551936. Here, recipes with missing ratings have different mean number of steps then those that have ratings. Then, we ran a permutation test by shuffling the labels of whether `avg_rating` is missing to see if the observed difference might be produced by random chance. It turned out that, with a statistically significant p-value of 0.0, the observed difference was very unlikely to be produced by random chance (see graph below). Therefore, recipes with missing ratings indeed have different mean number of steps then those where ratings are not missing, which shows that the distribution of recipes' number of steps differ for recipes with and without missing `avg_rating`. Therefore, we conclude that the missingness of `avg_rating` depends on `n_steps`, and that the missingness of `avg_rating` is MAR since it depends on at least one other column in the dataset.
+
+<iframe
+  src="assets/miss_fig1.html"
+  width="800"
+  height="600"
+  frameborder="0"
+></iframe>
+
+## Hypothesis Testing
+
+Earlier at the end of the EDA section, we asked the question **"Do recipes with more steps receive more polarized ratings?"**
+This motivated the hypothesis we wanted to test: 
+
+**Null Hypothesis: The standard deviation of average ratings of recipes with a number of steps greater than the median is the same as that of recipes with a number of steps less than or equal to the median. Any observed difference is due to random chance.**
+
+**Alternative Hypothesis: The standard deviation of average ratings of recipes with a number of steps greater than the median is higher than that of recipes with a number of steps less than or equal to the median.**
+
+**Test statistic: (Standard deviation of the average ratings of recipes with a number of steps greater than the median) - (Standard deviation of the average rating of recipes with a number of steps less than or equal to the median)**
+
+Here we divided all recipes into two groups: *many steps* and *few steps* based on whether their number of steps is greater than or less than or equal to the median number of steps across all recipes. If we can show that the group with number of steps above the median has more spread out ratings, this implies that higher number of steps of a recipe is related with more polarizing user opinion.
+
+We conducted a permutation test to test our hypothesis. Below are the results:
+
+**observed test statistic: 0.023195841346820067**
+**P-value: 0.002**
+
+At a significant level of 0.05, we **reject** the null hypothesis. The permutation test provides evidence for our alternative hypothesis, implying that **the more steps a recipe has, the higher the standard deviation of the ratings are, which reflects that people's opinion on a recipe becomes more polarizing as the number of steps in a recipe increases**. This makes sense intuitively, since longer and more complex recipes can be more exquisite and interesting,but also more time-consuming and requires more effort. People who are interested in cooking and are willing to put in the time and effort like them a lot, but others might get bored and frustrated due to the complexity.
+
+*Note: The permutation test was only conducted on recipes with non-NAN average ratings. While dropping rows could cause bias, we previously showed that the missingness of `avg_rating` depends on whether `n_steps` is high or low, and we are testing the spread of `avg_rating` given high or low `n_steps`, so even though some rows are dropped, the remaining datapoints in each group still roughly give a good estimate of the distribution of `avg_rating` in the corresponding group of high or low `n_steps`. In other words, the missingness mechanism was already accounted for by the grouping. Nevertheless, it is still worth pointing out that simply dropping rows, without conducting the appropriate imputations, might introduce some bias to our analyses. Specifically, the unrated complex recipes may be systematically more extreme than rated ones, potentially understating the true difference in standard deviation. Our estimation of the difference is likely smaller than the real world difference across all recipes"*
+
+**If we use the number of steps as a proxy for the complexity of a recipe, this answers the big question we posed at the beginning: the more complex a recipe is, the more polarizing is users' perception of it.**
+
+Below is a graph for the distribution of the simulated test statistics, with the vertical line showing the observed test statistic from our dataset.
+
+<iframe
+  src="assets/test_fig1.html.html"
+  width="800"
+  height="600"
+  frameborder="0"
+></iframe>
+
+
+## Framing a Prediction Problem
+
+Now that we have answered the question of association between complexity and rating, let us move on to make some predictions of recipe ratings based on its attributes.
+
+The prediction problem: Predict average ratings of recipes based on its features.
+
+Type of prediction: Regression (because `avg_rating` is numerical)
+
+Response variable: `avg_rating` is already a direct measurement of the ratings of each recipe, so we will use it as the response variable.
+
+Evaluation metric: RMSE. This metric especially penalizes wrong predictions with a squared error, so a high prediction error gets penalized much more than a low prediction error. This is actually what we need, because the rating scale (1-5) is very narrow, and a high error in prediction is very misleading of how the recipe could be perceived. We also prefer RMSE over MSE or R^2^ because RMSE is interpretable in the original units of the response variable.
+
+The features we can use are any feature that is an attribute of a recipe, such `n_steps`, `n_ingredients`, `ratings`, the columns we have broken up from `nutrients`, the date `submitted`, `tags` and `description`.
+
+
+## Baseline Model
+
+For the baseline model, we will use the features `n_steps` (quantitative), `n_ingredients` (quantitative) and `minutes` (quantitative) to predict `avg_rating`. We will transform the features using StandardScaler to make the coefficients more interpretable.
+
+Model equation:
+
+**`avg_rating` = w~0~ + w~1~ * `n_steps` + w~2~ * `n_ingredients` + w~3~ * `minutes`**
+
+Results:
+
+**intercept=4.625936770036079 coefficients=[ 0.00509091 -0.00561886 -0.00170918]**
+
+**Training RMSE: 0.6414118972545692 Testing RMSE: 0.6380591007634507**
+
+Compared to the testing RMSE of the constant model (always predicting the mean of training targets): 0.6380469851545696
+
+The model has similar training and testing performance, so it is not overfitting. However, the testing RMSE is almost the same as the testing RMSE we get from a constant model, so this baseline linear regression model is not much improvement from the constant model. Therefore, the model is not yet very good and needs improvement.
+
+## Final Model
+
+In this final model, we used polynomial regression. In addition to `n_steps`, `n_ingredients` and `minutes` in the baseline model, we added some of the nutrition columns, including `calories`, `total fat`, `protein`, and `carbohydrate`. This is because people's perception of a recipe may depend on whether the food is healthy and nutritious, and whether it causes them to gain weight. I chose a few of the nutrition columns that I thought were the most important nutrition elements, plus calories. I discarded the others because otherwise we would have too many features and may cause the model to overfit noise. For polynomial regression, we will transform only a subset of the features: `n_steps` and `n_ingredients` because they represent recipe complexity and were the features we cared the most about. We didn't create power and interaction terms for other features to prevent an overfitting model. We chose the best model by using GridSearchCV to choose the best hyperparameter (degrees: [1, 2, 3]) for the features that we applied polynomial transformation. For the GridSearchCV we used the scoring metric of 'neg_root_mean_squared_error' and the default 5-fold cross validation.
+
+Model results:
+From GridSearchCV, we found out that the best hyperparameter for the polynomial transformation is 2. The best model has a **Training RMSE of 0.6403710190379198** and a **Testing RMSE of 0.6373901852576074**. *We see a slight improvement from the baseline model*.
+
+
+## Fairness Analysis
+
+We evaluated whether the model perform equally well on all recipes regardless of their number of steps. We asked the question: **does the final model perform worse when it comes to recipes with many steps?**
+
+**Group X: Recipes with number of steps greater than the median number of steps across recipes**
+**Group Y: Recipes with number of steps less than or equal to the median number of steps across recipes**
+
+Evaluation metric: RMSE
+
+Null Hypothesis: Our model is fair. The RMSE of the final model on recipes with a number of steps greater than the median is the same as the RMSE of the final model on recipes with a number of steps less than or equal to the median.
+
+Alternative Hypothesis: Our model is unfair. The RMSE of the final model on recipes with a number of steps greater than the median is greater than the RMSE of the final model on recipes with a number of steps less than or equal to the median.
+
+Test statistic: (RMSE of the final model on recipes with a number of steps greater than the median - RMSE of the final model on recipes with a number of steps less than or equal to the median)
+
+Again, we conducted a permutation test.
+
+Test result: many_steps_RMSE: 0.6393543621494383, few_steps_RMSE: 0.6357364004317855
+observed statistic: 0.6393543621494383 - 0.6357364004317855 = 0.003617961718
+p-value: 0.417
+
+At the significance level of 0.05, we fail to reject the null hypothesis. There is not enough evidence that the model performs worse on recipes with more steps, and what we observed that the model performs worse on recipes with above median number of steps is likely due to random chance. Therefore, we believe that the model performs fairly with respect to recipes with different number of steps.
