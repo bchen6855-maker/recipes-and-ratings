@@ -97,7 +97,7 @@ We see that across the quartile groups, the center statistics (mean and median) 
 
 ## Assessment of Missingness
 
-Before we head into hypothesis testing, let's assess the missingness of **recipes**. In **recipes**, three columns: `name` and `description` and `avg_rating` have missing data. `avg_rating` has the highest number of missing entries. First, we wanted to examine if any of the columns with missing values could be NMAR (not missing at random, or missingness in a column depends on the values in that column). We could make educated guesses of how the missingness might depend on other columns, thereby ruling out NMAR. For `avg_rating`, it's missingness could depend on a lot of columns. For instance, some recipes are not rated because nobody bothered to try them, and this might be because the recipes is too complicated (missingess depends on `n_steps`), because it takes too long (missingess depends on `minutes`), or because the food isn't appealing (missingess depends on `ingredients`). For `description`, there isn't a good reason why it would be missing because of what the description would have been. Probably some recipe providers just didn't bother writing the description. This also makes NMAR not very plausible for `description`. Finally, only one entry of `name` is missing. This is just an arbitrary instance of missing data, so it is probably not NMAR either (likely MCAR, but we cannot say for sure without statistical testing). Therefore, we were convinced that none of the three columns are likely to be NMAR.
+Before we head into hypothesis testing, let's assess the missingness of **recipes**. In **recipes**, three columns: `name` and `description` and `avg_rating` have missing data. `avg_rating` has the highest number of missing entries. First, we wanted to examine if any of the columns with missing values could be NMAR (not missing at random, where missingness in a column depends on the values in that column). We could make educated guesses of how the missingness might depend on other columns, thereby ruling out NMAR. For `avg_rating`, it's missingness could depend on a lot of columns. For instance, some recipes are not rated because nobody bothered to try them, and this might be because the recipes is too complicated (missingess depends on `n_steps`), because it takes too long (missingess depends on `minutes`), or because the food isn't appealing (missingess depends on `ingredients`). For `description`, there isn't a good reason why it would be missing because of what the description would have been. Probably some recipe providers just didn't bother writing the description. This also makes NMAR not very plausible for `description`. Finally, only one entry of `name` is missing. This is just an arbitrary instance of missing data, so it is probably not NMAR either (likely MCAR, but we cannot say for sure without statistical testing). Therefore, we were convinced that none of the three columns are likely to be NMAR.
 
 Moving away from the possibility of NMAR, we wanted to test if the columns are MAR or MCAR, or in other words, does the missingness of a column depend on other columns. We chose to analyze `avg_rating` because it has the most number of missing entries, and its missingess would have a significant impact on our analyses.
 
@@ -191,15 +191,17 @@ The model has similar training and testing performance, so it is not overfitting
 In this final model, we used polynomial regression. In addition to `n_steps`, `n_ingredients` and `minutes` in the baseline model, we added some of the nutrition columns, including `calories`, `total fat`, `protein`, and `carbohydrate`. This is because people's perception of a recipe may depend on whether the food is healthy and nutritious, and whether it causes them to gain weight. I chose a few of the nutrition columns that I thought were the most important nutrition elements, plus calories. I discarded the others because otherwise we would have too many features and may cause the model to overfit noise. For polynomial regression, we will transform only a subset of the features: `n_steps` and `n_ingredients` because they represent recipe complexity and were the features we cared the most about. We didn't create power and interaction terms for other features to prevent an overfitting model. We chose the best model by using GridSearchCV to choose the best hyperparameter (degrees: [1, 2, 3]) for the features that we applied polynomial transformation. For the GridSearchCV we used the scoring metric of 'neg_root_mean_squared_error' and the default 5-fold cross validation.
 
 Model results:
-From GridSearchCV, we found out that the best hyperparameter for the polynomial transformation is 2. The best model has a **Training RMSE of 0.6403710190379198** and a **Testing RMSE of 0.6373620492335419**. *We see a slight improvement from the baseline model*.
+From GridSearchCV, we found out that the best hyperparameter for the polynomial transformation is 2. The best model has a **Training RMSE of 0.64028687123376368** and a **Testing RMSE of 0.6373620492335419**. *We see a slight improvement from the baseline model*.
 
 
 ## Fairness Analysis
 
-We evaluated whether the model perform equally well on all recipes regardless of their number of steps. We asked the question: **does the final model perform worse when it comes to recipes with many steps?**
+We evaluated whether the model perform equally well on all recipes regardless of their number of steps. We asked the question: **does the final model perform worse when it comes to recipes with many steps?** We put the recipes into the following two groups.
 
 **Group X: Recipes with number of steps greater than the median number of steps across recipes**
 **Group Y: Recipes with number of steps less than or equal to the median number of steps across recipes**
+
+Here, above median is a proxy for "many steps", and below median is a proxy for "few steps".
 
 Evaluation metric: RMSE
 
@@ -209,10 +211,10 @@ Alternative Hypothesis: Our model is unfair. The RMSE of the final model on reci
 
 Test statistic: (RMSE of the final model on recipes with a number of steps greater than the median - RMSE of the final model on recipes with a number of steps less than or equal to the median)
 
-Again, we conducted a permutation test.
+Again, we conducted a permutation test. 
 
-Test result: many_steps_RMSE: 0.6393543621494383, few_steps_RMSE: 0.6357364004317855
-observed statistic: 0.6393543621494383 - 0.6357364004317855 = 0.003617961718
-p-value: 0.417
+Test result: many_steps_RMSE: 0.6393487841178822, few_steps_RMSE: 0.6357350661853234
+observed statistic: 0.6393487841178822 - 0.6357350661853234 = 0.0036137179325588242
+p-value: 0.404
 
-At the significance level of 0.05, we fail to reject the null hypothesis. There is not enough evidence that the model performs worse on recipes with more steps, and what we observed that the model performs worse on recipes with above median number of steps is likely due to random chance. Therefore, we believe that the model performs fairly with respect to recipes with different number of steps.
+At the significance level of 0.05, we fail to reject the null hypothesis. There is not enough evidence that the model performs worse on recipes with more steps, and what we observed that the model performs worse on recipes with above median number of steps is likely due to random chance. Therefore, we believe that the model performs fairly with respect to recipes with many steps and few steps.
