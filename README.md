@@ -110,6 +110,15 @@ In order to determine if the missingness of `avg_rating` is MAR or MCAR, we used
   frameborder="0"
 ></iframe>
 
+We also conducted the same test on other columns. The same missingness permutation test produced a p-value of 0.194 for the column `protein`, showing that the missingness of `avg_rating` **does not depend** on `protein`. 
+
+<iframe
+  src="assets/miss_fig2.html"
+  width="800"
+  height="600"
+  frameborder="0"
+></iframe>
+
 ## Hypothesis Testing
 
 Earlier at the end of the EDA section, we asked the question **"Do recipes with more steps receive more polarized ratings?"**
@@ -154,7 +163,7 @@ Type of prediction: Regression (because `avg_rating` is numerical)
 
 Response variable: `avg_rating` is already a direct measurement of the ratings of each recipe, so we will use it as the response variable.
 
-Evaluation metric: RMSE. This metric especially penalizes wrong predictions with a squared error, so a high prediction error gets penalized much more than a low prediction error. This is actually what we need, because the rating scale (1-5) is very narrow, and a high error in prediction is very misleading of how the recipe could be perceived. We also prefer RMSE over MSE or R^2^ because RMSE is interpretable in the original units of the response variable.
+Evaluation metric: RMSE. This metric especially penalizes wrong predictions with a squared error, so a high prediction error gets penalized much more than a low prediction error. This is actually what we need, because the rating scale (1-5) is very narrow, and a high error in prediction is very misleading of how the recipe could be perceived. We also prefer RMSE over MSE or R<sup>2</sup> because RMSE is interpretable in the original units of the response variable.
 
 The features we can use are any feature that is an attribute of a recipe, such `n_steps`, `n_ingredients`, `ratings`, the columns we have broken up from `nutrients`, the date `submitted`, `tags` and `description`.
 
@@ -165,11 +174,11 @@ For the baseline model, we will use the features `n_steps` (quantitative), `n_in
 
 Model equation:
 
-**`avg_rating` = w~0~ + w~1~ * `n_steps` + w~2~ * `n_ingredients` + w~3~ * `minutes`**
+**`avg_rating` = w<sub>0</sub> + w<sub>1</sub> * `n_steps` + w<sub>2</sub> * `n_ingredients` + w<sub>3</sub> * `minutes`**
 
 Results:
 
-**intercept=4.625936770036079 coefficients=[ 0.00509091 -0.00561886 -0.00170918]**
+**intercept=4.625936770036079  coefficients=[0.00509091 -0.00561886 -0.00170918]**
 
 **Training RMSE: 0.6414118972545692 Testing RMSE: 0.6380591007634507**
 
@@ -182,7 +191,7 @@ The model has similar training and testing performance, so it is not overfitting
 In this final model, we used polynomial regression. In addition to `n_steps`, `n_ingredients` and `minutes` in the baseline model, we added some of the nutrition columns, including `calories`, `total fat`, `protein`, and `carbohydrate`. This is because people's perception of a recipe may depend on whether the food is healthy and nutritious, and whether it causes them to gain weight. I chose a few of the nutrition columns that I thought were the most important nutrition elements, plus calories. I discarded the others because otherwise we would have too many features and may cause the model to overfit noise. For polynomial regression, we will transform only a subset of the features: `n_steps` and `n_ingredients` because they represent recipe complexity and were the features we cared the most about. We didn't create power and interaction terms for other features to prevent an overfitting model. We chose the best model by using GridSearchCV to choose the best hyperparameter (degrees: [1, 2, 3]) for the features that we applied polynomial transformation. For the GridSearchCV we used the scoring metric of 'neg_root_mean_squared_error' and the default 5-fold cross validation.
 
 Model results:
-From GridSearchCV, we found out that the best hyperparameter for the polynomial transformation is 2. The best model has a **Training RMSE of 0.6403710190379198** and a **Testing RMSE of 0.6373901852576074**. *We see a slight improvement from the baseline model*.
+From GridSearchCV, we found out that the best hyperparameter for the polynomial transformation is 2. The best model has a **Training RMSE of 0.6403710190379198** and a **Testing RMSE of 0.6373620492335419**. *We see a slight improvement from the baseline model*.
 
 
 ## Fairness Analysis
