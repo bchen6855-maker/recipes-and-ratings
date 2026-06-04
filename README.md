@@ -17,7 +17,7 @@ From the merged dataset, we calculate the average rating of each recipe and save
 
 Next, we parse the `nutrition` column into separate columns based on the nutrition category. The `nutrition` column has entries in the format "[calories (#), total fat (PDV), sugar (PDV), sodium (PDV), protein (PDV), saturated fat (PDV), and carbohydrates (PDV)]". By parsing it we create a separate column for each nutrition category, making it easier for later data analysis.
 
-Then, we noticed a suspicious value in the `minutes` column. The column has maximum value 1051200, which is almost two years. This is a suspicious value. To investigate, we take a closer look at the top ten recipes that take the most time to make. We found that most of them are preserves, pickles, vinegar, or alcohol, which are indeed food that can take months to make, so they are reasonable values. However, the recipe that takes the longest time is different, as it takes way more time than the others. After investigating that specific recipe, we found out that it is not a real recipe, just a joke about relationship that was thrown in here. The `steps` of this recipe shows this:
+Then, we noticed a suspicious value in the `minutes` column. The column has maximum value 1051200, which is almost two years. This is a suspicious value. To investigate, we take a closer look at the top ten recipes that take the most time to make. We found that most of them are preserves, pickles, vinegar, or alcohol, which are indeed food that can take months to make, so they are reasonable values. However, the recipe that took the longest time is different, as it took way more time than the others. After investigating that specific recipe, we found out that it was not a real recipe, just a joke about relationship that had been thrown in here. The `steps` of this recipe shows this:
 
 
 | steps          | ['be careful in your selection', "don't choose too young", 'when selected , give your entire thoughts to preparation for domestic use', 'some wives insist upon keeping them in a pickle , others are constantly getting them into hot water', 'this may make them sour , hard and sometimes bitter', 'even poor varieties may be made sweet , tender and good by garnishing with patience , well sweetened with love and seasoned with kisses', 'wrap them in a mantle of charity', 'keep warm with a steady fire of domestic devotion and serve with peaches and cream', 'thus prepared , they will keep for years'] |
@@ -45,7 +45,7 @@ We used **histogram** to analyze the relevant variables for univariate analysis.
 
 We can see that `n_steps` is right-skewed. 
 
-Similar EDA are done for the columns `n_ingredients`, `avg_rating`, `minutes`, `calories` and `protein`. Here is an example of `avg_rating`.
+Similar EDA are done for the columns `n_ingredients`, `avg_rating`, `minutes`, `calories`, `protein`, `total fat` and `carbohydrates`. Here is an example of `avg_rating`.
 
 <iframe
   src="assets/avg_rating_hist.html"
@@ -188,7 +188,13 @@ The model has similar training and testing performance, so it is not overfitting
 
 ## Final Model
 
-In this final model, we used polynomial regression. In addition to `n_steps`, `n_ingredients` and `minutes` in the baseline model, we added some of the nutrition columns, including `calories`, `total fat`, `protein`, and `carbohydrate`. This is because people's perception of a recipe may depend on whether the food is healthy and nutritious, and whether it causes them to gain weight. I chose a few of the nutrition columns that I thought were the most important nutrition elements, plus calories. I discarded the others because otherwise we would have too many features and may cause the model to overfit noise. For polynomial regression, we will transform only a subset of the features: `n_steps` and `n_ingredients` because they represent recipe complexity and were the features we cared the most about. We didn't create power and interaction terms for other features to prevent an overfitting model. We chose the best model by using GridSearchCV to choose the best hyperparameter (degrees: [1, 2, 3]) for the features that we applied polynomial transformation. For the GridSearchCV we used the scoring metric of 'neg_root_mean_squared_error' and the default 5-fold cross validation.
+In this final model, we used polynomial regression. In addition to `n_steps`, `n_ingredients` and `minutes` in the baseline model, we added some of the nutrition columns, including `calories`, `total fat`, `protein`, and `carbohydrate`. This is because people's perception of a recipe may depend on whether the food is healthy and nutritious, and whether it causes them to gain weight. We chose a few of the nutrition columns that we thought were the most important nutrition elements, plus calories. We discarded the others because otherwise we would have too many features and may cause the model to overfit noise. 
+
+For polynomial regression, we will transform only a subset of the features: `n_steps` and `n_ingredients` because they represent recipe complexity and were the features we cared the most about. We didn't create power and interaction terms for other features to prevent an overfitting model. 
+
+For the other features: `minutes`, `calories`, `total fat`, `protein`, and `carbohydrate`, we used a `QuantileTransformer` to transform them into a Normal distribution because the raw features were highly right-skewed. 
+
+We chose the best model by using GridSearchCV to choose the best hyperparameter (degrees: [1, 2, 3]) for the features that we applied polynomial transformation. For the GridSearchCV we used the scoring metric of 'neg_root_mean_squared_error' and the default 5-fold cross validation.
 
 Model results:
 From GridSearchCV, we found out that the best hyperparameter for the polynomial transformation is 2. The best model has a **Training RMSE of 0.64028687123376368** and a **Testing RMSE of 0.6373620492335419**. *We see a slight improvement from the baseline model*.
