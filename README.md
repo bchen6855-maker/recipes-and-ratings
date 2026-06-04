@@ -214,7 +214,9 @@ Test statistic: (RMSE of the final model on recipes with a number of steps great
 Again, we conducted a permutation test. 
 
 Test result: many_steps_RMSE: 0.6393487841178822, few_steps_RMSE: 0.6357350661853234
+
 observed statistic: 0.6393487841178822 - 0.6357350661853234 = 0.0036137179325588242
+
 p-value: 0.404
 
 At the significance level of 0.05, we fail to reject the null hypothesis. There is not enough evidence that the model performs worse on recipes with more steps, and what we observed that the model performs worse on recipes with above median number of steps is likely due to random chance. Therefore, we believe that the model performs fairly with respect to recipes with many steps and few steps.
